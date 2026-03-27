@@ -1,87 +1,65 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ricerca Tecnica</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ricerca Tecnica</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
-
 <body class="bg-gray-100 p-5">
 
 <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-lg">
-  <h2 class="text-xl font-bold mb-4 text-blue-600">Ricerca Tecnica</h2>
+<h2 class="text-xl font-bold mb-4 text-blue-600">Ricerca Tecnica</h2>
 
-  <div class="space-y-4">
-    <input id="vconc" type="number" placeholder="Vconcatenata [V]" class="w-full border p-2 rounded">
-    <input id="rfase" type="number" step="0.01" placeholder="Rfase [Ω]" class="w-full border p-2 rounded">
-    <input id="req" type="number" step="0.01" placeholder="Req [Ω]" class="w-full border p-2 rounded">
-    <input id="ptot" type="number" step="0.1" placeholder="Ptot [kW]" class="w-full border p-2 rounded">
+<div class="space-y-4">
+  <input id="vconc" type="number" placeholder="Vconcatenata [V]" class="w-full border p-2 rounded">
+  <input id="rfase" type="number" step="0.01" placeholder="Rfase [Ω]" class="w-full border p-2 rounded">
+  <input id="req" type="number" step="0.01" placeholder="Req [Ω]" class="w-full border p-2 rounded">
+  <input id="ptot" type="number" step="0.1" placeholder="Ptot [kW]" class="w-full border p-2 rounded">
 
-    <button id="btn" onclick="cerca()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold">
-      CERCA
-    </button>
-  </div>
+  <button id="btn" onclick="cerca()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold">
+    CERCA
+  </button>
+</div>
 
-  <div id="risultati" class="mt-6 hidden">
-    <pre id="output" class="bg-gray-100 p-3 rounded text-sm"></pre>
-  </div>
+<div id="risultati" class="mt-6 hidden">
+  <pre id="output" class="bg-gray-100 p-3 rounded text-sm"></pre>
+</div>
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXlQQjWMziCx6GYZW0KBFJ7NsgORrimti9-sB-JFZNOjlBwm_xOFRl2a5YF5WhpJAO/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCe4xjjPgpTvw2RxG-QipimLytoA-QMkrQ4wVnxM20lMR2i9VWfdw1b7eJ007W4nDg/exec";
 
-// ===== FORMATTA RIGA =====
+// Formatta riga completa B:O
 function formatRow(row) {
   if (!row) return "Nessuno";
-
-  return `
-Rfase: ${row[10]} Ω
-Req: ${row[11]} Ω
-Ptot: ${row[14]} kW
-`;
+  return row.map((v, i) => `Colonna ${i+2}: ${v}`).join("\n");
 }
 
-// ===== CHIAMATA API =====
 async function cerca() {
   const btn = document.getElementById("btn");
   const output = document.getElementById("output");
-
-  btn.disabled = true;
-  btn.innerText = "Ricerca...";
+  btn.disabled = true; btn.innerText="Ricerca...";
 
   try {
     const params = new URLSearchParams({
       vconc: document.getElementById('vconc').value,
       rfase: document.getElementById('rfase').value,
-      req: document.getElementById('req').value,
-      ptot: document.getElementById('ptot').value
+      req:   document.getElementById('req').value,
+      ptot:  document.getElementById('ptot').value
     });
 
     const res = await fetch(`${SCRIPT_URL}?${params}`);
-
-    if (!res.ok) throw new Error("Errore HTTP");
-
     const data = await res.json();
 
     document.getElementById('risultati').classList.remove('hidden');
 
     if (data.error) {
       output.innerText = data.error;
-      return;
-    }
-
-    // ===== OUTPUT =====
-    if (data.exact) {
-      output.innerText =
-        "MATCH ESATTO:\n" +
-        formatRow(data.target);
+    } else if (data.exact) {
+      output.innerText = "MATCH ESATTO:\n" + formatRow(data.row);
     } else {
-      output.innerText =
-        "VALORE SOTTO:\n" +
-        formatRow(data.below) +
-        "\n---\nVALORE SOPRA:\n" +
-        formatRow(data.above);
+      output.innerText = "VALORE SOTTO:\n" + formatRow(data.below) + "\n---\nVALORE SOPRA:\n" + formatRow(data.above);
     }
 
   } catch (err) {
@@ -89,8 +67,7 @@ async function cerca() {
     console.error(err);
   }
 
-  btn.disabled = false;
-  btn.innerText = "CERCA";
+  btn.disabled = false; btn.innerText="CERCA";
 }
 </script>
 
